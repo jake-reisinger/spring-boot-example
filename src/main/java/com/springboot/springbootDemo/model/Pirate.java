@@ -28,7 +28,7 @@ public class Pirate {
 	}
 	
 	public void setShipName(String shipName) {
-		this.shipName = name;
+		this.shipName = shipName;
 	}
 	
 	@Override
