@@ -1,33 +1,39 @@
 package com.springboot.springbootDemo.service;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import org.springframework.stereotype.Service;
 
 import com.springboot.springbootDemo.model.Employee;
+import com.springboot.springbootDemo.sql.ConnectToMySql;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 	private static ArrayList<Employee> employeeList = new ArrayList<>();
+	private Properties sqlCredentials = getSqlCredentials();
 	
-	static {
-		employeeList.add(new Employee(1, "Jake", "Reisinger", "jpreisinger@protonmail.com"));
-		employeeList.add(new Employee(2, "Cake", "Reisinger", "feaatherrs@yahoo.com"));
+	private String dbUser = sqlCredentials.getProperty("my.dbuser");
+	private String dbPwd = sqlCredentials.getProperty("my.dbpwd");
+	private ConnectToMySql conn = new ConnectToMySql("development", dbUser, dbPwd);
+	
+	@Override
+	public void addEmployee(String firstName, String lastName, String email) throws SQLException {
+		conn.addEmployee(firstName, lastName, email);
 	}
 	
 	@Override
-	public void addEmployee(Employee employee) {
-		employeeList.add(employee);
-	}
-	
-	@Override
-	public void updateEmployee(Integer id, Integer newId) {
+	public void updateEmployee(Integer id, String email) throws SQLException {
 		Employee employeeToUpdate = new Employee();
 		employeeToUpdate = getEmployee(id);
 		
 		int index = getEmployeeIndex(employeeToUpdate);
 		
-		employeeList.get(index).setId(newId);
+		conn.updateEmployee(id, email);
 	}
 	
 	@Override
@@ -51,17 +57,35 @@ public class EmployeeServiceImpl implements EmployeeService {
 	}
 	
 	@Override
-	public void deleteEmployee(Integer id) {
+	public void deleteEmployee(Integer id) throws SQLException {
 		Employee employeeToDelete = new Employee();
 		employeeToDelete = getEmployee(id);
 		
 		int index = getEmployeeIndex(employeeToDelete);
 		
-		employeeList.remove(index);
+		conn.deleteEmployee(id);
 	}
 	
 	@Override
-	public ArrayList<Employee> getAllEmployees() {
+	public ArrayList<Employee> getAllEmployees() throws FileNotFoundException, ClassNotFoundException {	
+		employeeList = conn.getEmployees();
+		
 		return employeeList;
+	}
+	
+	public Properties getSqlCredentials() {
+		FileInputStream fis;
+		Properties prop = new Properties();
+		
+		try {
+			fis = new FileInputStream("myfile.properties");
+			prop.load(fis);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return prop;
 	}
 }
